@@ -1,3 +1,16 @@
+# Avhengigheter og byggeresultat
 node_modules/
 dist/
+
+# Hemmeligheter
 .env
+
+# Editor- og systemfiler (WebStorm/IntelliJ, VS Code, macOS, Windows)
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logger
+npm-debug.log*

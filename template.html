@@ -4,11 +4,52 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{title}}</title>
+  <link rel="icon" href="assets/321-logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <header class="site-header">
+    <div class="wrap">
+      <div class="topbar">
+        <a class="logo" href="./"><img src="assets/321-logo.svg" alt="321"></a>
+        <nav class="site-nav">
+          <a href="./"{{navBlogg}}>Blogg</a>
+          <a href="om.html"{{navOm}}>Om bloggen</a>
+          <a href="https://www.321.no/">321.no</a>
+        </nav>
+      </div>
+      <div class="hero">
+        <h1>{{siteName}}</h1>
+        <p>{{siteLead}}</p>
+      </div>
+    </div>
+  </header>
+
   <main>
+    <div class="wrap">
 {{content}}
+    </div>
   </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <img src="assets/321-logo.svg" alt="321">
+      <address>
+        <span>E-post: <a href="mailto:post@321.no">post@321.no</a></span>
+        <span>Telefon: <a href="tel:+4796996600">+47 96 996 600</a></span>
+        <span>Besøk: Strandgata 31, 2317 Hamar</span>
+      </address>
+      <address>
+        <a href="https://www.321.no/">321.no</a>
+        <a href="https://www.linkedin.com/company/tretoen/">LinkedIn</a>
+        <a href="https://www.instagram.com/tretoen/">Instagram</a>
+      </address>
+    </div>
+  </footer>
+
 </body>
 </html>
