@@ -1,0 +1,11 @@
+# Cloudflare Worker som videresender endringer fra Notion til GitHub Actions.
+# Deploy: npx wrangler deploy   (se README.md i rotmappa)
+name = "notion-blogg-webhook"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+GITHUB_REPO = "tretoen/notion-test-blogg"
+
+[observability]
+enabled = true

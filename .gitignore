@@ -2,8 +2,10 @@
 node_modules/
 dist/
 
-# Hemmeligheter
+# Hemmeligheter og lokale Cloudflare-filer
 .env
+.dev.vars
+.wrangler/
 
 # Editor- og systemfiler (WebStorm/IntelliJ, VS Code, macOS, Windows)
 .idea/
