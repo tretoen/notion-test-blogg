@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "node --env-file-if-exists=.env build.js"
+    "build": "node --env-file-if-exists=.env build.js",
+    "watch": "node --env-file-if-exists=.env watch-notion.js"
   },
   "repository": {
     "type": "git",

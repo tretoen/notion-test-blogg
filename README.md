@@ -20,6 +20,8 @@ Bilder lastes ned til `dist/img/` fordi Notion sine S3-lenker utløper etter ca.
 | `pages/om.html` | Innholdet på «Om bloggen» |
 | `assets/` | Logo og andre faste filer |
 | `.github/workflows/build.yml` | Bygger og publiserer til GitHub Pages |
+| `watch-notion.js` | Valgfri: starter bygg når Notion endres (kjøres lokalt, `npm run watch`) |
+| `notion-webhook/` | Valgfri: samme, men som Cloudflare Worker |
 
 Teksten øverst på alle sider («Blogg» og undertittelen) endres i `SITE` øverst i `build.js`.
 
@@ -43,30 +45,66 @@ Teksten øverst på alle sider («Blogg» og undertittelen) endres i `SITE` øve
 2. **Settings → Pages → Source: GitHub Actions**.
 3. Workflowen bygger ved push til `main`, hver hele time og manuelt via **Actions → Bygg og publiser → Run workflow**.
 
-Med Notion-reléet under (anbefalt) er endringer ute etter et par minutter. Uten det er de ute innen en time, eller med en gang om man kjører workflowen manuelt.
+Med automatisk oppdatering (se under) er endringer ute etter sekunder eller et par minutter. Uten det er de ute innen en time, eller med en gang om man kjører workflowen manuelt.
 
 ## Oppdatering med en gang når noe endres i Notion
 
-I tillegg til timesbyggingen kan Notion si fra når et innlegg endres, så bygges siden med en gang:
+Det finnes to måter å gjøre dette på. Begge starter samme workflow (`repository_dispatch` med typen `notion-updated`), så man kan bytte mellom dem uten å endre noe annet. Bruk bare én av gangen – ellers starter hver endring to bygg.
+
+| | A: `watch-notion.js` (lokalt) | B: `notion-webhook/` (Cloudflare) |
+|---|---|---|
+| Hvordan | Sjekker Notion hvert 10. sekund | Notion sender beskjed ved endring |
+| Kjører | På en maskin som står på | I Cloudflare, alltid på |
+| Trenger | GitHub-token i `.env` | Cloudflare-konto, GitHub-token, webhook i Notion |
+| Forsinkelse | ca. 10 sekunder | ca. 1–2 minutter (Notion samler opp endringer) |
+
+Timesbyggingen blir liggende som sikkerhetsnett uansett.
+
+### A: Lokal overvåking med watch-notion.js
+
+`watch-notion.js` følger med på Notion-databasen og starter GitHub-bygget når et publisert innlegg endres – nytt innlegg, endret tekst eller bilder, avpublisert eller slettet. Kladder som ikke er publisert starter ikke bygg.
 
 ```
-Notion (webhook) → Cloudflare Worker (notion-webhook/) → GitHub Actions (repository_dispatch) → GitHub Pages
+watch-notion.js (sjekker Notion hvert 10. sekund) → GitHub Actions (repository_dispatch) → GitHub Pages
 ```
 
-Notion samler opp tekstendringer, så et bygg starter ca. 1–2 minutter etter at noen har sluttet å skrive. Workeren sjekker signaturen fra Notion, så ingen andre kan starte bygg. Timesbyggingen blir liggende som sikkerhetsnett.
+Scriptet kjører på en maskin som står på (f.eks. en laptop eller en server). Det trenger ingen offentlig adresse. Når maskinen er av, tar timesbyggingen over.
 
-Oppsettet gjøres én gang:
+Notion lagrer «sist endret» bare med minutt-presisjon, så scriptet sender alltid ett ekstra bygg like etter at minuttet med siste endring er over. Da kommer også endringer gjort i samme minutt med.
+
+Oppsett:
 
 1. **GitHub-token.** Gå til <https://github.com/settings/personal-access-tokens> → *Generate new token* (fine-grained).
    - *Resource owner*: `tretoen` (organisasjonen må kanskje godkjenne tokenet)
    - *Repository access*: kun `notion-test-blogg`
    - *Permissions → Repository → Contents*: **Read and write**
+2. **`.env`.** Kopier `.env.example` til `.env` og fyll inn `NOTION_TOKEN`, `NOTION_DATABASE_ID`, `GITHUB_TOKEN` og `GITHUB_REPO`.
+3. **Start:**
+   ```sh
+   npm install
+   npm run watch
+   ```
+   Scriptet skriver en linje hver gang det starter et bygg. Stopp med Ctrl+C.
+
+Hvor ofte det sjekkes kan endres med `POLL_SECONDS` i `.env` (standard 10). Skal det kjøre hele tiden på Windows, kan det startes automatisk med Oppgaveplanlegging (Task Scheduler) ved pålogging.
+
+### B: Cloudflare-relé (notion-webhook/)
+
+Notion sender en webhook til en liten Cloudflare Worker, som sjekker signaturen fra Notion og ber GitHub starte bygget:
+
+```
+Notion (webhook) → Cloudflare Worker (notion-webhook/) → GitHub Actions (repository_dispatch) → GitHub Pages
+```
+
+Oppsett:
+
+1. **GitHub-token** – samme type som over (fine-grained, kun `notion-test-blogg`, *Contents: Read and write*).
 2. **Deploy workeren** (krever en gratis Cloudflare-konto):
    ```sh
    cd notion-webhook
    npx wrangler login
    npx wrangler deploy                      # gir en adresse som https://notion-blogg-webhook.<konto>.workers.dev
-   npx wrangler secret put GITHUB_TOKEN     # lim inn tokenet fra steg 1
+   npx wrangler secret put GITHUB_TOKEN     # lim inn tokenet
    ```
 3. **Koble til Notion.** Start `npx wrangler tail` i et eget vindu (viser loggen fra workeren). Så:
    - Åpne integrasjonen på <https://www.notion.so/profile/integrations> → fanen **Webhooks** → **Create a subscription**.
@@ -78,5 +116,6 @@ Oppsettet gjøres én gang:
      npx wrangler secret put NOTION_VERIFICATION_TOKEN
      ```
 4. **Test.** Endre et innlegg i Notion. Etter 1–2 minutter skal det dukke opp en kjøring av «Bygg og publiser» under **Actions**, utløst av `repository_dispatch`.
+5. **Stopp `npm run watch`** hvis den kjører, så det ikke startes dobbelt.
 
 Feilsøking: `npx wrangler tail` viser hva workeren gjør med hver melding (startet bygg, ugyldig signatur, eller svar fra GitHub).

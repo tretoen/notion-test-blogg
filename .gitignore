@@ -2,7 +2,7 @@
 node_modules/
 dist/
 
-# Hemmeligheter og lokale Cloudflare-filer
+# Hemmeligheter og lokale Cloudflare-filer (notion-webhook/)
 .env
 .dev.vars
 .wrangler/
